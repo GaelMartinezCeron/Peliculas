@@ -1,28 +1,13 @@
 "use client"
-  import { useState } from "react"
-function sage() {
+import { useState } from "react"
 
+function Sage() {
 
   const generosDisponibles = [
-    "Acción",
-    "Aventura",
-    "Animación",
-    "Comedia",
-    "Drama",
-    "Terror",
-    "Ciencia Ficción",
-    "Romance",
-    "Fantasia",
-    "Suspenso",
-    "Documental",
-    "Crimen",
-    "Misterio",
-    "Musical",
-    "Histórica",
-    "Bélica",
-    "Deporte",
-    "Familiar",
-    "Western"
+    "Acción","Aventura","Animación","Comedia","Drama","Terror",
+    "Ciencia Ficción","Romance","Fantasia","Suspenso","Documental",
+    "Crimen","Misterio","Musical","Histórica","Bélica",
+    "Deporte","Familiar","Western"
   ]
 
   const [form, setForm] = useState({
@@ -30,7 +15,7 @@ function sage() {
     genero: "",
     descripcion: "",
     imagen: "",
-    videoUrl: ""
+    video_url: ""   // ✅ CAMBIADO AQUÍ
   })
 
   const [loading, setLoading] = useState(false)
@@ -49,25 +34,33 @@ function sage() {
     e.preventDefault()
     setError("")
 
-    if (!form.nombre || !form.genero || !form.descripcion || !form.videoUrl) {
+    if (!form.nombre || !form.genero || !form.descripcion || !form.video_url) {
       setError("Completa todos los campos")
       return
     }
 
-    if (!isValidUrl(form.videoUrl)) {
+    if (!isValidUrl(form.video_url)) {
       setError("El link del video no es válido")
       return
     }
 
     setLoading(true)
 
-    await fetch("/api/movies", {
+    const res = await fetch("/api/movies", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(form)
     })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || "Error al guardar")
+      setLoading(false)
+      return
+    }
 
     setLoading(false)
 
@@ -76,7 +69,7 @@ function sage() {
       genero: "",
       descripcion: "",
       imagen: "",
-      videoUrl: ""
+      video_url: ""
     })
 
     alert("Película registrada correctamente")
@@ -99,14 +92,14 @@ function sage() {
           )}
 
           <input
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border rounded-lg"
             placeholder="Nombre"
             value={form.nombre}
             onChange={e => setForm({ ...form, nombre: e.target.value })}
           />
 
           <select
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full p-3 border rounded-lg bg-white"
             value={form.genero}
             onChange={e => setForm({ ...form, genero: e.target.value })}
           >
@@ -119,7 +112,7 @@ function sage() {
           </select>
 
           <textarea
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border rounded-lg"
             placeholder="Descripción"
             rows={4}
             value={form.descripcion}
@@ -128,28 +121,23 @@ function sage() {
 
           <input
             type="url"
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Link del video"
-            value={form.videoUrl}
-            onChange={e => setForm({ ...form, videoUrl: e.target.value })}
+            className="w-full p-3 border rounded-lg"
+            placeholder="Link del video (YouTube)"
+            value={form.video_url}
+            onChange={e => setForm({ ...form, video_url: e.target.value })}
           />
 
           <input
             type="file"
             accept="image/*"
-            className="w-full p-2 border rounded-lg cursor-pointer file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-lg file:cursor-pointer"
+            className="w-full p-2 border rounded-lg cursor-pointer"
             onChange={e => {
               const file = e.target.files?.[0]
               if (!file) return
 
-              if (!file.type.startsWith("image/")) {
-                setError("Solo se permiten archivos de imagen")
-                return
-              }
-
               const reader = new FileReader()
               reader.onload = () => {
-                setForm({ ...form, imagen: reader.result as string })
+                setForm(prev => ({ ...prev, imagen: reader.result as string }))
               }
               reader.readAsDataURL(file)
             }}
@@ -166,7 +154,7 @@ function sage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 transition duration-300 text-white font-semibold py-3 rounded-lg shadow-md"
+            className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-semibold py-3 rounded-lg"
           >
             {loading ? "Guardando..." : "Guardar Película"}
           </button>
@@ -177,4 +165,4 @@ function sage() {
   )
 }
 
-export default sage
+export default Sage

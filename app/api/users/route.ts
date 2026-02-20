@@ -1,39 +1,47 @@
 import { NextResponse } from "next/server"
 import { db } from "../../lib/db"
-function generatePassword(length = 8) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  let password = ""
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return password
-}
-
-export async function GET() {
-  const [rows] = await db.query("SELECT * FROM users")
-  return NextResponse.json(rows)
-}
+import { generatePassword } from "../../lib/generarpass"
 
 export async function POST(req: Request) {
-  const data = await req.json()
+  try {
+    const data = await req.json()
 
-  const password = generatePassword(8)
+    if (!data.nombre || !data.paterno || !data.materno || !data.correo) {
+      return NextResponse.json(
+        { message: "Todos los campos son obligatorios" },
+        { status: 400 }
+      )
+    }
 
-  await db.query(
-    "INSERT INTO users (nombre, paterno, materno, correo, password) VALUES (?, ?, ?, ?, ?)",
-    [data.nombre, data.paterno, data.materno, data.correo, password]
-  )
+    // Verificar si ya existe
+    const [existing]: any = await db.query(
+      "SELECT id FROM users WHERE correo = ?",
+      [data.correo]
+    )
 
-  return NextResponse.json({ password })
-}
+    if (existing.length > 0) {
+      return NextResponse.json(
+        { message: "Este correo ya está registrado" },
+        { status: 400 }
+      )
+    }
 
-export async function PUT(req: Request) {
-  const data = await req.json()
+    const password = generatePassword(8)
 
-  await db.query(
-    "UPDATE users SET activo = ? WHERE id = ?",
-    [data.activo, data.id]
-  )
+    await db.query(
+      "INSERT INTO users (nombre, paterno, materno, correo, password) VALUES (?, ?, ?, ?, ?)",
+      [data.nombre, data.paterno, data.materno, data.correo, password]
+    )
 
-  return NextResponse.json({ message: "Usuario actualizado" })
+    return NextResponse.json({
+      message: "Usuario registrado correctamente"
+    })
+
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      { message: "Error interno del servidor" },
+      { status: 500 }
+    )
+  }
 }

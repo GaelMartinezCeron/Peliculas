@@ -1,114 +1,164 @@
 "use client"
+
 import { useState } from "react"
 
-export default function Saludar() {
-
-  const [form, setForm] = useState({
+export default function AgregarUsers() {
+  const [formData, setFormData] = useState({
     nombre: "",
     paterno: "",
     materno: "",
     correo: ""
   })
 
-  const [generatedPassword, setGeneratedPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState("")
+  const [isError, setIsError] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e: any) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault()
-    setLoading(true)
 
-    const res = await fetch("/api/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form)
-    })
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
 
-    const data = await res.json()
-    setGeneratedPassword(data.password)
+      const data = await res.json()
 
-    setForm({
-      nombre: "",
-      paterno: "",
-      materno: "",
-      correo: ""
-    })
+      if (data.error) {
+        setIsError(true)
+        setMessage(data.message)
+        return
+      }
 
-    setLoading(false)
+      setIsError(false)
+      setMessage(data.message)
+
+      setFormData({
+        nombre: "",
+        paterno: "",
+        materno: "",
+        correo: ""
+      })
+
+    } catch (error) {
+      setIsError(true)
+      setMessage("Error al conectar con el servidor")
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 px-4">
-      
-      <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-xl">
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>Registrar Usuario</h2>
 
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Registrar Usuario
-        </h1>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-
+        <form onSubmit={handleSubmit} style={styles.form}>
           <input
-            type="text"
+            name="nombre"
             placeholder="Nombre"
-            required
-            value={form.nombre}
-            onChange={e => setForm({ ...form, nombre: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={formData.nombre}
+            onChange={handleChange}
+            style={styles.input}
           />
 
           <input
-            type="text"
+            name="paterno"
             placeholder="Apellido Paterno"
-            required
-            value={form.paterno}
-            onChange={e => setForm({ ...form, paterno: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={formData.paterno}
+            onChange={handleChange}
+            style={styles.input}
           />
 
           <input
-            type="text"
+            name="materno"
             placeholder="Apellido Materno"
-            required
-            value={form.materno}
-            onChange={e => setForm({ ...form, materno: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={formData.materno}
+            onChange={handleChange}
+            style={styles.input}
           />
 
           <input
-            type="email"
-            placeholder="Correo"
-            required
-            value={form.correo}
-            onChange={e => setForm({ ...form, correo: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            name="correo"
+            placeholder="Correo Electrónico"
+            value={formData.correo}
+            onChange={handleChange}
+            style={styles.input}
           />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 transition duration-300 text-white font-semibold py-3 rounded-lg shadow-md"
-          >
-            {loading ? "Registrando..." : "Registrar"}
+          <button type="submit" style={styles.button}>
+            Registrar
           </button>
-
         </form>
 
-        {generatedPassword && (
-          <div className="mt-6 bg-green-100 border border-green-300 p-4 rounded-xl">
-            <p className="text-green-700 font-semibold">
-              Usuario registrado correctamente
-            </p>
-            <div className="mt-2">
-              <span className="font-bold text-gray-700">Contraseña generada:</span>
-              <div className="mt-1 bg-white p-2 rounded-md border font-mono text-indigo-600">
-                {generatedPassword}
-              </div>
-            </div>
-          </div>
+        {message && (
+          <p
+            style={{
+              marginTop: "15px",
+              color: isError ? "#ff4d4d" : "#00cc66",
+              fontWeight: "500"
+            }}
+          >
+            {message}
+          </p>
         )}
-
       </div>
-
     </div>
   )
+}
+
+const styles = {
+  container: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "linear-gradient(135deg, #1e3c72, #2a5298)"
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    padding: "40px",
+    borderRadius: "12px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+    width: "100%",
+    maxWidth: "400px"
+  },
+  title: {
+    textAlign: "center" as const,
+    marginBottom: "20px",
+    fontSize: "22px",
+    fontWeight: "bold",
+    color: "#333"
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "15px"
+  },
+  input: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+    outline: "none"
+  },
+  button: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#1e3c72",
+    color: "white",
+    fontSize: "15px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "0.3s"
+  }
 }
